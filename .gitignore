@@ -1,0 +1,20 @@
+# --- Frontend (React/Vite) ---
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+package-lock.json
+.env
+.env.local
+
+# --- Terraform ---
+.terraform/
+terraform/.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+*.tfvars
+
+# --- Sistema ---
+.DS_Store
+Thumbs.db
