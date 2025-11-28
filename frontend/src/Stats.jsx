@@ -1,45 +1,59 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import axios from 'axios';
 
-// MOCK DATA (Simulando respuesta de tu Módulo 3)
-const MOCK_DATA = {
-  urlOriginal: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-  totalVisitas: 1245,
-  creado: "2023-11-01",
-  historial: [
-    { fecha: '2023-11-20', visitas: 45 },
-    { fecha: '2023-11-21', visitas: 120 },
-    { fecha: '2023-11-22', visitas: 85 },
-    { fecha: '2023-11-23', visitas: 200 }, // Día pico
-    { fecha: '2023-11-24', visitas: 150 },
-    { fecha: '2023-11-25', visitas: 90 },
-    { fecha: '2023-11-26', visitas: 300 },
-  ]
-};
+// 👇 ESTA ES TU API DEL MÓDULO 3 (Ya la puse por ti)
+const API_BASE_URL = "https://rwfkmc03y1.execute-api.us-east-1.amazonaws.com";
 
 function Stats() {
   const { codigo } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Simulamos la petición al API Gateway (Módulo 3)
-    setTimeout(() => {
-      setData(MOCK_DATA);
-      setLoading(false);
-    }, 1000);
+    const fetchData = async () => {
+      try {
+        console.log("Consultando API...");
+        // 1. LLAMADA REAL AL BACKEND (MÓDULO 3)
+        // Nota: Agregamos un timestamp para evitar que el navegador guarde caché vieja
+        const response = await axios.get(`${API_BASE_URL}/stats/${codigo}?t=${Date.now()}`);
+        
+        console.log("Datos recibidos:", response.data);
+        setData(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error conectando al backend:", err);
+        setError(true);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [codigo]);
 
-  if (loading) return <div style={styles.container}><h2>🔄 Cargando estadísticas...</h2></div>;
+  if (loading) return <div style={styles.container}><h2>🔄 Conectando con Módulo 3...</h2></div>;
+  
+  if (error || !data) return (
+    <div style={styles.container}>
+        <div style={{...styles.card, borderColor: 'red'}}>
+            <h2 style={{color: 'red'}}>❌ Error de Conexión</h2>
+            <p>No se pudo conectar con el Backend (Módulo 3).</p>
+            <p>Verifica que la URL del API sea correcta.</p>
+        </div>
+    </div>
+  );
 
   // Calculamos el máximo para escalar las barras del gráfico
-  const maxVisitas = Math.max(...data.historial.map(d => d.visitas));
+  // (Si no hay historial, usamos 1 para evitar división por cero)
+  const historial = data.historial || [];
+  const maxVisitas = historial.length > 0 ? Math.max(...historial.map(d => d.visitas)) : 100;
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>📊 Estadísticas del Enlace</h1>
-        <p style={styles.subtitle}>Código: <strong>{codigo}</strong></p>
+        <h1 style={styles.title}>📊 Estadísticas Reales (Módulo 3+4)</h1>
+        <p style={styles.subtitle}>Código: <strong>{data.codigo}</strong></p>
         
         <div style={styles.infoGrid}>
           <div style={styles.statBox}>
@@ -48,35 +62,43 @@ function Stats() {
           </div>
           <div style={styles.statBox}>
             <span style={styles.label}>URL Original</span>
-            <a href={data.urlOriginal} target="_blank" style={styles.link}>
-              {data.urlOriginal.substring(0, 30)}...
+            <a href={data.urlOriginal} target="_blank" rel="noreferrer" style={styles.link}>
+              {data.urlOriginal ? data.urlOriginal.substring(0, 30) + "..." : "N/A"}
             </a>
           </div>
         </div>
 
-        <h3 style={{marginTop: '30px', color: '#555'}}>📅 Visitas últimos 7 días</h3>
-        <div style={styles.chartContainer}>
-          {data.historial.map((dia, index) => (
-            <div key={index} style={styles.barGroup}>
-              {/* La barra visual */}
-              <div 
-                style={{
-                  ...styles.bar, 
-                  height: `${(dia.visitas / maxVisitas) * 100}px`, // Altura dinámica
-                  backgroundColor: dia.visitas === maxVisitas ? '#ff5722' : '#2196f3' // Color diferente para el pico
-                }} 
-              />
-              <span style={styles.barLabel}>{dia.fecha.slice(5)}</span>
-              <span style={styles.barValue}>{dia.visitas}</span>
+        {data.filtroAplicado === "SI" && (
+             <p style={{color: 'green', fontWeight: 'bold'}}>✅ Filtrado por fecha activado</p>
+        )}
+
+        <h3 style={{marginTop: '30px', color: '#555'}}>📅 Historial de Visitas</h3>
+        
+        {historial.length === 0 ? (
+            <p>No hay datos históricos para mostrar.</p>
+        ) : (
+            <div style={styles.chartContainer}>
+            {historial.map((dia, index) => (
+                <div key={index} style={styles.barGroup}>
+                <div 
+                    style={{
+                    ...styles.bar, 
+                    height: `${(dia.visitas / maxVisitas) * 100}px`, 
+                    backgroundColor: dia.visitas >= maxVisitas ? '#ff5722' : '#2196f3'
+                    }} 
+                />
+                <span style={styles.barLabel}>{dia.fecha ? dia.fecha.slice(5) : 'N/A'}</span>
+                <span style={styles.barValue}>{dia.visitas}</span>
+                </div>
+            ))}
             </div>
-          ))}
-        </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ESTILOS CSS EN JAVASCRIPT (Para que sea "Hermoso y Elegante")
+// ESTILOS (Iguales que antes)
 const styles = {
   container: {
     fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -94,7 +116,8 @@ const styles = {
     boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
     width: '100%',
     maxWidth: '600px',
-    textAlign: 'center'
+    textAlign: 'center',
+    border: '1px solid transparent'
   },
   title: { color: '#1a202c', marginBottom: '5px' },
   subtitle: { color: '#718096', marginBottom: '30px' },
@@ -110,8 +133,6 @@ const styles = {
   label: { fontSize: '0.9em', color: '#4a5568', marginBottom: '5px' },
   number: { fontSize: '1.5em', fontWeight: 'bold', color: '#2b6cb0' },
   link: { color: '#2b6cb0', textDecoration: 'none', fontWeight: 'bold' },
-  
-  // Gráfico
   chartContainer: {
     display: 'flex',
     justifyContent: 'space-around',
@@ -122,7 +143,7 @@ const styles = {
     marginTop: '20px'
   },
   barGroup: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' },
-  bar: { width: '20px', borderRadius: '4px 4px 0 0', transition: 'all 0.3s ease' },
+  bar: { width: '20px', borderRadius: '4px 4px 0 0', transition: 'all 0.3s ease', minHeight: '5px' },
   barLabel: { fontSize: '0.7em', color: '#718096' },
   barValue: { fontSize: '0.8em', fontWeight: 'bold', color: '#2d3748' }
 };
