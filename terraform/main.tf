@@ -2,9 +2,10 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# 1. BUCKET S3 (modulo4)
+# 1. BUCKET S3 (NOMBRE CORREGIDO)
 resource "aws_s3_bucket" "stats_bucket" {
-  bucket = "parcial-modulo-4-tu-nombre-aqui" # <--- CAMBIAR ESTO
+  # He puesto tu usuario y año para asegurar que sea único
+  bucket = "parcial-modulo-4-pedrokorone-2025" 
 }
 
 # 2. CONFIGURACIÓN WEBSITE
