@@ -52,7 +52,7 @@ function Stats() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>📊 Estadísticas Reales (Módulo 3+4)</h1>
+        <h1 style={styles.title}>📊 Control de Estadística</h1>
         <p style={styles.subtitle}>Código: <strong>{data.codigo}</strong></p>
         
         <div style={styles.infoGrid}>
