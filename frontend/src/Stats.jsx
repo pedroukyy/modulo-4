@@ -4,25 +4,21 @@ import { useParams } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
 import './App.css';
 
-// URL DE TU BACKEND (MÓDULO 3)
 const API_URL = "https://rwfkmc03y1.execute-api.us-east-1.amazonaws.com";
 
 function Stats() {
   const { codigo } = useParams();
   const [data, setData] = useState(null);
-  const [chartData, setChartData] = useState([]); // Datos procesados para la gráfica
+  const [chartData, setChartData] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Función mágica: Convierte lista de fechas en conteo por día
   const procesarHistorial = (historialCrudo) => {
     if (!historialCrudo || historialCrudo.length === 0) return [];
 
     const conteo = {};
     
-    // Recorremos cada fecha guardada (ej: "2025-11-28T14:30...")
     historialCrudo.forEach(fechaISO => {
-      // Nos quedamos solo con la parte del día (YYYY-MM-DD)
       const dia = fechaISO.split('T')[0]; 
       if (conteo[dia]) {
         conteo[dia] += 1;
@@ -31,7 +27,6 @@ function Stats() {
       }
     });
 
-    // Convertimos a formato para la gráfica: [{ fecha: "2025-11-28", visitas: 5 }]
     return Object.keys(conteo).map(key => ({
       fecha: key,
       visitas: conteo[key]
@@ -44,7 +39,6 @@ function Stats() {
         const response = await axios.get(`${API_URL}/stats/${codigo}`);
         setData(response.data);
         
-        // Procesamos el historial apenas llega
         const datosGrafica = procesarHistorial(response.data.historial);
         setChartData(datosGrafica);
 
